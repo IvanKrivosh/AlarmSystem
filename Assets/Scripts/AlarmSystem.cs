@@ -3,54 +3,36 @@ using System.Collections;
 
 public class AlarmSystem : MonoBehaviour
 {
+    private const float DelayChangeValue = 0.5f;
+
     [SerializeField] private AudioSource _audioSource;
     [SerializeField] private float _volumePercentStep = 0.1f;
 
     private float _minVolume = 0f;
-    private float _maxVolume = 1f;
-    private float _delayChangeValue = 0.5f;    
+    private float _maxVolume = 1f;       
     private float _cureentPercentValume;
     private IEnumerator _turnOnCoroutine;
-    private IEnumerator _turnOffCoroutine;
+    private IEnumerator _turnOffCoroutine;    
+    private WaitForSeconds _audioChangeDelay = new WaitForSeconds(DelayChangeValue);
 
     private void Awake()
     {
         _audioSource.volume = 0;
-    }    
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (collision.TryGetComponent(out Criminal criminal))
-        {
-            _turnOnCoroutine = TurnOnAlarm();
-            StartCoroutine(_turnOnCoroutine);
-        }
     }
 
-    private void OnTriggerExit2D(Collider2D collision)
+    public void TurnOn()
     {
-        if (collision.TryGetComponent(out Criminal criminal))
-        {
-            _turnOffCoroutine = TurnOffAlarm();
-            StartCoroutine(_turnOffCoroutine);
-        }
+        _turnOnCoroutine = TurnOnSound();
+        StartCoroutine(_turnOnCoroutine);
     }
 
-    private IEnumerator TurnOffAlarm()
+    public void TurnOff()
     {
-        if (_turnOnCoroutine != null)
-            StopCoroutine(_turnOnCoroutine);
-
-        while (_audioSource.volume != _minVolume)
-        {            
-            ChangeValume(false);
-            yield return new WaitForSeconds(_delayChangeValue); ;
-        }
-
-        _audioSource.Stop();
+        _turnOffCoroutine = TurnOffSound();
+        StartCoroutine(_turnOffCoroutine);
     }
 
-    private IEnumerator TurnOnAlarm()
+    private IEnumerator TurnOnSound()
     {
         if (_turnOffCoroutine != null)
             StopCoroutine(_turnOffCoroutine);
@@ -58,11 +40,25 @@ public class AlarmSystem : MonoBehaviour
         _audioSource.Play();
 
         while (_audioSource.volume != _maxVolume)
-        {            
+        {
             ChangeValume();
-            yield return new WaitForSeconds(_delayChangeValue);
+            yield return _audioChangeDelay;
         }
     }
+
+    private IEnumerator TurnOffSound()
+    {
+        if (_turnOnCoroutine != null)
+            StopCoroutine(_turnOnCoroutine);
+
+        while (_audioSource.volume != _minVolume)
+        {            
+            ChangeValume(false);
+            yield return _audioChangeDelay;
+        }
+
+        _audioSource.Stop();
+    }    
 
     private void ChangeValume(bool increment = true)
     {
