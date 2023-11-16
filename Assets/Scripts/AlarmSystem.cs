@@ -3,66 +3,54 @@ using System.Collections;
 
 public class AlarmSystem : MonoBehaviour
 {
-    private const float DelayChangeValue = 0.5f;
-
     [SerializeField] private AudioSource _audioSource;
     [SerializeField] private float _volumePercentStep = 0.1f;
+    [SerializeField] private float _delayChangeValue = 0.5f;
 
     private float _minVolume = 0f;
-    private float _maxVolume = 1f;       
-    private float _cureentPercentValume;
-    private IEnumerator _turnOnCoroutine;
-    private IEnumerator _turnOffCoroutine;    
-    private WaitForSeconds _audioChangeDelay = new WaitForSeconds(DelayChangeValue);
+    private float _maxVolume = 1f;
+    private float _targetVolume;    
+    WaitForSeconds _audioChangeDelay;
+    private Coroutine _coroutineSound;
 
     private void Awake()
     {
         _audioSource.volume = 0;
+        _audioChangeDelay = new WaitForSeconds(_delayChangeValue);
     }
 
     public void TurnOn()
     {
-        _turnOnCoroutine = TurnOnSound();
-        StartCoroutine(_turnOnCoroutine);
+        if (!_audioSource.isPlaying)
+            _audioSource.Play();
+
+        SetTargetVolume(_maxVolume);
     }
 
     public void TurnOff()
     {
-        _turnOffCoroutine = TurnOffSound();
-        StartCoroutine(_turnOffCoroutine);
+        SetTargetVolume(_minVolume);
     }
 
-    private IEnumerator TurnOnSound()
+    private void SetTargetVolume(float targetVolume)
     {
-        if (_turnOffCoroutine != null)
-            StopCoroutine(_turnOffCoroutine);
+        _targetVolume = targetVolume;
 
-        _audioSource.Play();
+        if (_coroutineSound == null)
+            _coroutineSound = StartCoroutine(ChangeSoundVolume());
+    }
 
-        while (_audioSource.volume != _maxVolume)
+    private IEnumerator ChangeSoundVolume()
+    {
+        while (_audioSource.volume != _targetVolume)
         {
-            ChangeValume();
-            yield return _audioChangeDelay;
-        }
-    }
-
-    private IEnumerator TurnOffSound()
-    {
-        if (_turnOnCoroutine != null)
-            StopCoroutine(_turnOnCoroutine);
-
-        while (_audioSource.volume != _minVolume)
-        {            
-            ChangeValume(false);
+            _audioSource.volume = Mathf.MoveTowards(_audioSource.volume, _targetVolume, _volumePercentStep);
             yield return _audioChangeDelay;
         }
 
-        _audioSource.Stop();
-    }    
+        if (_targetVolume == _minVolume)
+            _audioSource.Stop();
 
-    private void ChangeValume(bool increment = true)
-    {
-        _cureentPercentValume += _volumePercentStep * (increment ? 1 : -1);
-        _audioSource.volume = Mathf.MoveTowards(_minVolume, _maxVolume, _cureentPercentValume);
+        _coroutineSound = null;
     }
 }
