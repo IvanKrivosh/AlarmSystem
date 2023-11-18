@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public class AlarmSystem : MonoBehaviour
+public class Alarm : MonoBehaviour
 {
     [SerializeField] private AudioSource _audioSource;
     [SerializeField] private float _volumePercentStep = 0.1f;
@@ -9,8 +9,8 @@ public class AlarmSystem : MonoBehaviour
 
     private float _minVolume = 0f;
     private float _maxVolume = 1f;
-    private float _targetVolume;    
-    WaitForSeconds _audioChangeDelay;
+    private float _targetVolume;
+    private WaitForSeconds _audioChangeDelay;
     private Coroutine _coroutineSound;
 
     private void Awake()
